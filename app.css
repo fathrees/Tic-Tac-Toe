@@ -1,0 +1,14 @@
+.row {
+    height: 153px;
+    text-align: center;
+}
+.field {
+    display: inline-block;
+    height: 150px;
+    width: 150px;
+    border: solid black;
+    margin-left: -7px;
+}
+img {
+    padding: 11.5px;
+}
