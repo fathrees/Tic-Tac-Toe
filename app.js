@@ -46,23 +46,21 @@ function compStep(){
         putSign(corner[getRandom(0, 3)], compSign);
         return ifFinish();
     }
-    chain.forEach(function(item) {
-        if (checkChain(map, item)) {
-            return ifFinish();
-        }
-    });
-    chain.forEach(function(item) {
-        if (checkChain(turn(map), item, true)) {
-            return ifFinish();
-        }
-    });
+    if (chain.some(function(item) {
+            return checkChain(map, item);
+        }) ||
+        chain.some(function(item) {
+            return checkChain(turn(map), item, true);
+        })){
+        return ifFinish();
+    }
 }
 
 function ifFinish() {
     if (++step >= countFields) {
         finish();
-        return true;
     }
+    return true;
 }
 
 function finish(){
