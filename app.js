@@ -17,7 +17,7 @@ function userStep(field) {
         refresh();
     }
     putSign(field, userSign);
-    if (++step <= countFields) {
+    if (++step < countFields) {
         compStep();
     }else{
         finish();
@@ -28,8 +28,8 @@ function refresh(){
     for (var i = 0; i < countFields; i++){
         document.getElementById(i.toString()).innerHTML = "";
         map[i] = 0;
-        step = 0;
     }
+    step = 0;
 }
 
 function putSign(field, sign) {
@@ -38,20 +38,33 @@ function putSign(field, sign) {
 }
 
 function compStep(){
-    if (!map[center]) {
-        putSign(center, compSign);
-        return ifFinish();
-    }
-    if (!map[corner[0]] && !map[corner[1]] && !map[corner[2]] && !map[corner[3]]) {
-        putSign(corner[getRandom(0, 3)], compSign);
-        return ifFinish();
+    if (step < 3) {
+        if (!map[center]) {
+            putSign(center, compSign);
+            return step++;
+        }
+        if (corner.every(function (item) {
+                return !map[item]
+            })) {
+            putSign(corner[getRandom(0, 3)], compSign);
+            return step++;
+        }
     }
     if (chain.some(function(item) {
             return checkChain(map, item);
         }) ||
         chain.some(function(item) {
-            return checkChain(turn(map), item, true);
+            var turnedMap = turn(map);
+            return checkChain(turnedMap, item, true);
         })){
+        return step++;
+    }
+    var opposite;
+    if (map[center] === "u" && corner.some(function(item, i, arr) {
+            opposite = arr.length - i - 1;
+            return (map[item] === "u" && !map[arr[opposite]]);
+        })){
+        putSign(corner[opposite], compSign);
         return ifFinish();
     }
 }
@@ -78,7 +91,8 @@ function checkChain(array, chain, turned) {
             putSign(posChain + chain.indexOf("0"), compSign);
         }else{
             array[posChain + chain.indexOf("0")] = "c";
-            turn(turn(turn(array))).forEach(function(item, i, arr) {
+            map = turn(turn(turn(array)));
+            map.forEach(function(item, i, arr) {
                 if (item) {
                     document.getElementById(i.toString()).innerHTML = ((item === "c") ? compSign : userSign);
                 }
@@ -98,7 +112,7 @@ function turn(array) {
     for (i = 0; i < size; i++) {
         turned[i] = [];
         for (var j = 0; j < size; j++) {
-            turned[i][j] = matrix[size-j-1][i];
+            turned[i][j] = matrix[size - j - 1][i];
         }
     }
     return turned.reduce(function(flat, current) {return flat.concat(current);}, []);
