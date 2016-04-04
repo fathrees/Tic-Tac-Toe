@@ -9,19 +9,8 @@ var cross = "<img src='cross.png'>",
     center = 4,
     corner = [0, 2, 6, 8],
     notChain = [1, 2, 4, 5],
+    chain = ["0uu", "u0u", "uu0"],
     map = [];
-
-function userZero() {
-    refresh();
-    userSign = zero;
-    compSign = cross;
-    compStep();
-}
-
-function putSign(field, sign) {
-    map[field] = ((sign === userSign) ? "u" : "c");
-    document.getElementById(field.toString()).innerHTML = sign;
-}
 
 function userStep(field) {
     if (!step){
@@ -35,42 +24,44 @@ function userStep(field) {
     }
 }
 
+function refresh(){
+    for (var i = 0; i < countFields; i++){
+        document.getElementById(i.toString()).innerHTML = "";
+        map[i] = 0;
+        step = 0;
+    }
+}
+
+function putSign(field, sign) {
+    map[field] = ((sign === userSign) ? "u" : "c");
+    document.getElementById(field.toString()).innerHTML = sign;
+}
+
 function compStep(){
     if (!map[center]) {
         putSign(center, compSign);
         return ifFinish();
     }
     if (!map[corner[0]] && !map[corner[1]] && !map[corner[2]] && !map[corner[3]]) {
-        var random = getRandom(0, 3);
-        putSign(corner[random], compSign);
+        putSign(corner[getRandom(0, 3)], compSign);
         return ifFinish();
     }
-    var rowChain = checkChain(map, "uu0");
-    if ((rowChain > -1) && (notChain.indexOf(rowChain) === -1)) {
-        putSign(rowChain + 2, compSign);
-        return ifFinish();
-    }
-    rowChain = checkChain(map, "0uu");
-    if ((rowChain > -1) && (notChain.indexOf(rowChain) === -1)) {
-        putSign(rowChain, compSign);
-        return ifFinish();
-    }
-    rowChain = checkChain(map, "u0u");
-    if ((rowChain > -1) && (notChain.indexOf(rowChain) === -1)) {
-        putSign(rowChain + 1, compSign);
-        return ifFinish();
-    }
-    //rowChain = checkChain(map, "0uu");
-    //if ((rowChain > -1) && (notChain.indexOf(rowChain) === -1)) {
-    //    putSign(rowChain, compSign);
-    //    return ifFinish();
-    //}
+    chain.forEach(function(item) {
+        if (checkChain(map, item)) {
+            return ifFinish();
+        }
+    });
+    chain.forEach(function(item) {
+        if (checkChain(turn(map), item, true)) {
+            return ifFinish();
+        }
+    });
 }
 
-function refresh(){
-    for (var i = 0; i < countFields; i++){
-        document.getElementById(i.toString()).innerHTML = "";
-        map[i] = 0;
+function ifFinish() {
+    if (++step >= countFields) {
+        finish();
+        return true;
     }
 }
 
@@ -82,29 +73,42 @@ function getRandom(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function ifFinish() {
-    if (++step >= countFields) {
-        finish();
+function checkChain(array, chain, turned) {
+    var posChain = array.join("").indexOf(chain);
+    if ((posChain > -1) && (notChain.indexOf(posChain) === -1)) {
+        if(!turned) {
+            putSign(posChain + chain.indexOf("0"), compSign);
+        }else{
+            array[posChain + chain.indexOf("0")] = "c";
+            turn(turn(turn(array))).forEach(function(item, i, arr) {
+                if (item) {
+                    document.getElementById(i.toString()).innerHTML = ((item === "c") ? compSign : userSign);
+                }
+            });
+        }
         return true;
     }
+    return false;
 }
 
 function turn(array) {
-    var matrix = [],
-        turned = [],
-        newArr = [];
+    var matrix = [];
     for (var i = 0; i < size; i++) {
-        matrix[i] = array.slice(i * size, size);
+        matrix[i] = array.slice(i * size, i * size + size);
     }
+    var turned = [];
     for (i = 0; i < size; i++) {
         turned[i] = [];
         for (var j = 0; j < size; j++) {
-            turned[i][j] = matrix[j][size - i];
+            turned[i][j] = matrix[size-j-1][i];
         }
     }
     return turned.reduce(function(flat, current) {return flat.concat(current);}, []);
 }
 
-function checkChain(array, chain) {
-    return array.join("").indexOf(chain);
+function userZero() {
+    refresh();
+    userSign = zero;
+    compSign = cross;
+    compStep();
 }
