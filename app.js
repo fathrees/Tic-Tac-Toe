@@ -1,26 +1,27 @@
 var cross = "<img src='cross.png'>",
     zero = "<img src='zero.png'>",
-    result = "Гру завершено!",
+    result = "Нічия!",
     userSign = cross,
     compSign = zero,
     size = 3,
     countFields = size * size,
-    step = 0,
+    map = [],
     center = 4,
     corner = [0, 2, 6, 8],
     notChain = [1, 2, 4, 5],
-    chain = ["0uu", "u0u", "uu0"],
-    map = [];
+    compPoint = "c",
+    userPoint = "u",
+    compChain = ["0cc", "c0c", "cc0"],
+    userChain = ["0uu", "u0u", "uu0"],
+    step = 0;
 
 function userStep(field) {
     if (!step){
         refresh();
     }
     putSign(field, userSign);
-    if (++step < countFields) {
+    if (!ifFinish()) {
         compStep();
-    }else{
-        finish();
     }
 }
 
@@ -33,8 +34,16 @@ function refresh(){
 }
 
 function putSign(field, sign) {
-    map[field] = ((sign === userSign) ? "u" : "c");
+    map[field] = ((sign === userSign) ? userPoint : compPoint);
     document.getElementById(field.toString()).innerHTML = sign;
+}
+
+function ifFinish() {
+    if (++step >= countFields) {
+        document.getElementById("finish").innerHTML = result;
+        return true;
+    }
+    return false;
 }
 
 function compStep(){
@@ -50,57 +59,57 @@ function compStep(){
             return step++;
         }
     }
-    if (chain.some(function(item) {
-            return checkChain(map, item);
-        }) ||
-        chain.some(function(item) {
-            var turnedMap = turn(map);
-            return checkChain(turnedMap, item, true);
-        })){
-        return step++;
-    }
-    var opposite;
-    if (map[center] === "u" && corner.some(function(item, i, arr) {
-            opposite = arr.length - i - 1;
-            return (map[item] === "u" && !map[arr[opposite]]);
-        })){
-        putSign(corner[opposite], compSign);
+    if (direct(compChain) || diagonal(compPoint)) {
         return ifFinish();
     }
-}
-
-function ifFinish() {
-    if (++step >= countFields) {
-        finish();
+    if (direct(userChain) || diagonal(userPoint)) {
+        return ifFinish();
     }
-    return true;
-}
-
-function finish(){
-    document.getElementById("finish").innerHTML = result;
 }
 
 function getRandom(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function direct(chain) {
+    if (chain.some(function (item) {
+            return checkChain(map, item);
+        }) ||
+        chain.some(function (item) {
+            var turnedMap = turn(map);
+            return checkChain(turnedMap, item, true);
+        })) {
+        return true;
+    }
+    return false;
+}
+
 function checkChain(array, chain, turned) {
-    var posChain = array.join("").indexOf(chain);
-    if ((posChain > -1) && (notChain.indexOf(posChain) === -1)) {
+    var position = array.join("").indexOf(chain);
+    if ((position > -1) && (notChain.indexOf(position) === -1)) {
         if(!turned) {
-            putSign(posChain + chain.indexOf("0"), compSign);
+            putSign(position + chain.indexOf("0"), compSign);
+            if (chain.indexOf(compPoint) > -1) {
+                compWon(position);
+            }
         }else{
-            array[posChain + chain.indexOf("0")] = "c";
+            array[position + chain.indexOf("0")] = compPoint;
             map = turn(turn(turn(array)));
             map.forEach(function(item, i, arr) {
                 if (item) {
-                    document.getElementById(i.toString()).innerHTML = ((item === "c") ? compSign : userSign);
+                    document.getElementById(i.toString()).innerHTML = ((item === compPoint) ? compSign : userSign);
                 }
             });
         }
         return true;
     }
     return false;
+}
+
+function compWon(position) {
+    //for (var i = 0; i < size; i++) {
+    //    document.getElementById((position + i).toString()).style.backgroundColor = "#00cc00";
+    //}
 }
 
 function turn(array) {
@@ -116,6 +125,18 @@ function turn(array) {
         }
     }
     return turned.reduce(function(flat, current) {return flat.concat(current);}, []);
+}
+
+function diagonal(point) {
+    var opposite;
+    if ((map[center] === point) && corner.some(function (item, i, arr) {
+            opposite = arr.length - i - 1;
+            return (map[item] === point && !map[arr[opposite]]);
+        })) {
+        putSign(corner[opposite], compSign);
+        return true;
+    }
+    return false;
 }
 
 function userZero() {
