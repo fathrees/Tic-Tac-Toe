@@ -1,18 +1,21 @@
 var cross = "<img src='cross.png'>",
     zero = "<img src='zero.png'>",
-    result = "Нічия!",
+    winMsg = "Комп'ютер переміг!",
+    drawMsg = "Нічия!",
     userSign = cross,
     compSign = zero,
     size = 3,
     countFields = size * size,
     map = [],
     center = 4,
-    corner = [0, 2, 6, 8],
+    corners = [0, 2, 6, 8],
     notChain = [1, 2, 4, 5],
     compPoint = "c",
     userPoint = "u",
+    empty = 0,
     compChain = ["0cc", "c0c", "cc0"],
     userChain = ["0uu", "u0u", "uu0"],
+    corner,
     step = 0;
 
 function userStep(field) {
@@ -20,15 +23,15 @@ function userStep(field) {
         refresh();
     }
     putSign(field, userSign);
-    if (!ifFinish()) {
-        compStep();
+    if (!ifFinish(drawMsg)) {
+        compStep(false);
     }
 }
 
 function refresh(){
     for (var i = 0; i < countFields; i++){
+        map[i] = empty;
         document.getElementById(i.toString()).innerHTML = "";
-        map[i] = 0;
     }
     step = 0;
 }
@@ -38,32 +41,39 @@ function putSign(field, sign) {
     document.getElementById(field.toString()).innerHTML = sign;
 }
 
-function ifFinish() {
-    if (++step >= countFields) {
-        document.getElementById("finish").innerHTML = result;
+function ifFinish(result) {
+    if ((++step >= countFields) || (result === winMsg)) {
+        document.getElementById("msg").innerHTML = result;
         return true;
     }
     return false;
 }
 
-function compStep(){
+function compStep(first){
     if (step < 3) {
-        if (!map[center]) {
+        if (!map[center] && (!step && getRandom(0, 1) || step)) {
             putSign(center, compSign);
-            return step++;
-        }
-        if (corner.every(function (item) {
-                return !map[item]
+        } else if (step !== 2) {
+            corner = getRandom(0, 3);
+            putSign(corners[corner], compSign);
+        } else if (map[center] === userPoint) {
+            putSign(corners[corners.length - corner - 1], compSign);
+        } else if (corners.some(function(item, i, arr) {
+                if (item) {
+                    corner = arr.length - i - 1;
+                    return true;
+                }
             })) {
-            putSign(corner[getRandom(0, 3)], compSign);
-            return step++;
+
         }
+        return step++;
     }
-    if (direct(compChain) || diagonal(compPoint)) {
-        return ifFinish();
+
+    if (horizontal(compChain) || vertical(compPoint) || diagonal(compPoint)) {
+        return ifFinish(winMsg);
     }
-    if (direct(userChain) || diagonal(userPoint)) {
-        return ifFinish();
+    if (horizontal(userChain) || vertical(userPoint) || diagonal(userPoint)) {
+        return ifFinish(drawMsg);
     }
 }
 
@@ -71,69 +81,52 @@ function getRandom(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function direct(chain) {
-    if (chain.some(function (item) {
-            return checkChain(map, item);
-        }) ||
-        chain.some(function (item) {
-            var turnedMap = turn(map);
-            return checkChain(turnedMap, item, true);
-        })) {
-        return true;
-    }
-    return false;
-}
-
-function checkChain(array, chain, turned) {
-    var position = array.join("").indexOf(chain);
+function horizontal(chain) {
+    return chain.some(function(item) {
+    var position = map.join("").indexOf(item);
     if ((position > -1) && (notChain.indexOf(position) === -1)) {
-        if(!turned) {
-            putSign(position + chain.indexOf("0"), compSign);
-            if (chain.indexOf(compPoint) > -1) {
-                compWon(position);
-            }
-        }else{
-            array[position + chain.indexOf("0")] = compPoint;
-            map = turn(turn(turn(array)));
-            map.forEach(function(item, i, arr) {
-                if (item) {
-                    document.getElementById(i.toString()).innerHTML = ((item === compPoint) ? compSign : userSign);
-                }
-            });
-        }
+        putSign(position + item.indexOf(empty), compSign);
+        //if (item.indexOf(compPoint) > -1) {
+        //    compWon(position);
+        //}
         return true;
+    }});
+}
+
+//function compWon(position) {
+//    for (var i = 0; i < size; i++) {
+//        document.getElementById((position + i).toString()).style.backgroundColor = "#00cc00";
+//    }
+//}
+
+function vertical(point) {
+    for (var i = 0; i < 2 * size; i++) {
+        if (map[i] === point) {
+            if ((map[i + 2 * size] === point) && !map[i + size]) {
+                putSign(i + size, compSign);
+                return true;
+            }
+            if (map[i + size] === point) {
+                if ((i < size) && !map[i + 2 * size]) {
+                    putSign((i + 2 * size), compSign);
+                    return true;
+                } else if ((i >= size) && !map[i - size]) {
+                    putSign((i - size), compSign);
+                    return true;
+                }
+            }
+        }
     }
     return false;
-}
-
-function compWon(position) {
-    //for (var i = 0; i < size; i++) {
-    //    document.getElementById((position + i).toString()).style.backgroundColor = "#00cc00";
-    //}
-}
-
-function turn(array) {
-    var matrix = [];
-    for (var i = 0; i < size; i++) {
-        matrix[i] = array.slice(i * size, i * size + size);
-    }
-    var turned = [];
-    for (i = 0; i < size; i++) {
-        turned[i] = [];
-        for (var j = 0; j < size; j++) {
-            turned[i][j] = matrix[size - j - 1][i];
-        }
-    }
-    return turned.reduce(function(flat, current) {return flat.concat(current);}, []);
 }
 
 function diagonal(point) {
     var opposite;
-    if ((map[center] === point) && corner.some(function (item, i, arr) {
+    if ((map[center] === point) && corners.some(function (item, i, arr) {
             opposite = arr.length - i - 1;
-            return (map[item] === point && !map[arr[opposite]]);
+            return ((map[item] === point) && !map[arr[opposite]]);
         })) {
-        putSign(corner[opposite], compSign);
+        putSign(corners[opposite], compSign);
         return true;
     }
     return false;
@@ -143,5 +136,5 @@ function userZero() {
     refresh();
     userSign = zero;
     compSign = cross;
-    compStep();
+    compStep(true);
 }
