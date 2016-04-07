@@ -34,6 +34,7 @@ function refresh(){
         document.getElementById(i.toString()).innerHTML = "";
     }
     step = 0;
+    document.getElementById("msg").innerHTML = "";
 }
 
 function putSign(field, sign) {
@@ -59,12 +60,14 @@ function compStep(first){
         } else if (map[center] === userPoint) {
             putSign(corners[corners.length - corner - 1], compSign);
         } else if (corners.some(function(item, i, arr) {
-                if (item) {
+                if (map[item]) {
                     corner = arr.length - i - 1;
                     return true;
                 }
             })) {
-
+            putSign(corners[corner], compSign);
+        } else {
+            putSign(corners[getRandom(0, 3)], compSign);
         }
         return step++;
     }
@@ -138,3 +141,9 @@ function userZero() {
     compSign = cross;
     compStep(true);
 }
+
+
+//outerHTML
+//c. text
+//d. innerText
+//e. HTML
