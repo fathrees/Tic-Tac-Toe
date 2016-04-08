@@ -9,13 +9,14 @@ var cross = "<img src='cross.png'>",
     map = [],
     center = 4,
     corners = [0, 2, 6, 8],
-    notChain = [1, 2, 4, 5],
+    middles = [1, 3, 5, 7],
     compPoint = "c",
     userPoint = "u",
     empty = 0,
     compChain = ["0cc", "c0c", "cc0"],
     userChain = ["0uu", "u0u", "uu0"],
-    corner,
+    notChain = [1, 2, 4, 5],
+    memorized,
     step = 0;
 
 function userStep(field) {
@@ -55,21 +56,57 @@ function compStep(first){
         if (!map[center] && (!step && getRandom(0, 1) || step)) {
             putSign(center, compSign);
         } else if (step !== 2) {
-            corner = getRandom(0, 3);
-            putSign(corners[corner], compSign);
+            memorized = getRandom(0, 3);
+            putSign(corners[memorized], compSign);
         } else if (map[center] === userPoint) {
-            putSign(corners[corners.length - corner - 1], compSign);
+            putSign(corners[corners.length - memorized - 1], compSign);
         } else if (corners.some(function(item, i, arr) {
-                if (map[item]) {
-                    corner = arr.length - i - 1;
-                    return true;
-                }
+                    memorized = arr.length - i - 1;
+                    return map[item];
             })) {
-            putSign(corners[corner], compSign);
+            putSign(corners[memorized], compSign);
         } else {
             putSign(corners[getRandom(0, 3)], compSign);
         }
         return step++;
+    }
+    if (step === 3) {
+        if (!corners.some(function(item) {
+                return map[item];
+            })) {
+            if (middles.some(function (item, i) {
+                    memorized = i;
+                    return map[item];
+                })) {
+                var freeCorners = corners.slice();
+                if (map[middles[middles.length - memorized - 1]] === userPoint) {
+                    putSign(corners[getRandom(0, 3)], compSign);
+                } else {
+                    if (map[middles[memorized + 1] === userPoint]) {
+                        memorized ? freeCorners.shift() : freeCorners.pop();
+                    } else {
+                        memorized ? freeCorners.splice(1, 1) : freeCorners.splice(2, 1);
+                    }
+                    putSign(freeCorners[getRandom(0, 2)], compSign);
+                }
+            }
+            return step++;
+        } else if (horizontal(userChain) || vertical(userPoint) || diagonal(userPoint)) {
+            return step++;
+        } else if (map[center] === compPoint) {
+            putSign(middles[getRandom(0, 3)], compSign);
+            return step++;
+        } else {
+            if (corners.some(function(item, i, arr) {
+                    memorized = i;
+                    return map[item];
+            })) {
+                freeCorners = [];
+                memorized ? freeCorners.push(corners[0], corners[3]) : freeCorners.push(corners[1], corners[2]);
+                putSign(freeCorners[getRandom(0, 1)], compSign);
+                return step++;
+            }
+        }
     }
 
     if (horizontal(compChain) || vertical(compPoint) || diagonal(compPoint)) {
