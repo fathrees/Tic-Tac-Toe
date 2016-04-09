@@ -121,6 +121,8 @@ function compStep(first){
     if (horizontal(emptyChain) || vertical(empty, compPoint) || diagonal(compPoint, empty)) {
         return step++;
     }
+    putSign(map.indexOf(empty), compSign);
+    return ifFinish(drawMsg);
 }
 
 function getRandom(min, max) {
