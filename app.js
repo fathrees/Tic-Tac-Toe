@@ -15,6 +15,7 @@ var cross = "<img src='cross.png'>",
     empty = 0,
     compChain = ["0cc", "c0c", "cc0"],
     userChain = ["0uu", "u0u", "uu0"],
+    emptyChain,
     notChain = [1, 2, 4, 5],
     memorized,
     step = 0;
@@ -91,9 +92,11 @@ function compStep(first){
                 }
             }
             return step++;
-        } else if (horizontal(userChain) || vertical(userPoint) || diagonal(userPoint)) {
+        } else if (horizontal(userChain) || vertical(userPoint, empty) || diagonal(userPoint)) {
             return step++;
-        } else if (map[center] === compPoint) {
+        } else if ((map[center] === compPoint) && (!middles.some(function(item) {
+                return map[item];
+            }))) {
             putSign(middles[getRandom(0, 3)], compSign);
             return step++;
         } else {
@@ -108,12 +111,15 @@ function compStep(first){
             }
         }
     }
-
-    if (horizontal(compChain) || vertical(compPoint) || diagonal(compPoint)) {
+    if ((step !== 4) && (horizontal(compChain) || vertical(compPoint, empty) || diagonal(compPoint))) {
         return ifFinish(winMsg);
     }
-    if (horizontal(userChain) || vertical(userPoint) || diagonal(userPoint)) {
+    if (horizontal(userChain) || vertical(userPoint, empty) || diagonal(userPoint)) {
         return ifFinish(drawMsg);
+    }
+    emptyChain = (step === 4) ? ["00c", "c00"] : ["00c", "c00", "0c0"];
+    if (horizontal(emptyChain) || vertical(empty, compPoint) || diagonal(compPoint, empty)) {
+        return step++;
     }
 }
 
@@ -123,13 +129,21 @@ function getRandom(min, max) {
 
 function horizontal(chain) {
     return chain.some(function(item) {
-    var position = map.join("").indexOf(item);
-    if ((position > -1) && (notChain.indexOf(position) === -1)) {
-        putSign(position + item.indexOf(empty), compSign);
-        //if (item.indexOf(compPoint) > -1) {
-        //    compWon(position);
-        //}
-        return true;
+        var mapStr = map.join(""),
+            position = mapStr.indexOf(item);
+        if (notChain.indexOf(position) > -1) {
+            position = mapStr.lastIndexOf(item);
+        }
+        if ((position > -1) && (notChain.indexOf(position) === -1)) {
+            if (chain === emptyChain && getRandom(0, 1)) {
+                putSign(position + item.lastIndexOf(empty), compSign);
+            } else {
+                putSign(position + item.indexOf(empty), compSign);
+            }
+            //if (item.indexOf(compPoint) > -1) {
+            //    compWon(position);
+            //}
+            return true;
     }});
 }
 
@@ -139,19 +153,31 @@ function horizontal(chain) {
 //    }
 //}
 
-function vertical(point) {
+function vertical(point, other) {
     for (var i = 0; i < 2 * size; i++) {
         if (map[i] === point) {
-            if ((map[i + 2 * size] === point) && !map[i + size]) {
-                putSign(i + size, compSign);
+            if ((map[i + 2 * size] === point) && (map[i + size] === other)) {
+                if (point) {
+                    putSign(i + size, compSign);
+                } else {
+                    getRandom(0, 1) ? putSign(i, compSign) : putSign(i + 2 * size, compSign);
+                }
                 return true;
             }
             if (map[i + size] === point) {
-                if ((i < size) && !map[i + 2 * size]) {
-                    putSign((i + 2 * size), compSign);
+                if ((i < size) && (map[i + 2 * size] === other)) {
+                    if (point) {
+                        putSign(i + 2 * size, compSign);
+                    } else {
+                        getRandom(0, 1) ? putSign(i, compSign) : putSign(i + size, compSign);
+                    }
                     return true;
-                } else if ((i >= size) && !map[i - size]) {
-                    putSign((i - size), compSign);
+                } else if ((i >= size) && (map[i - size] === other)) {
+                    if (point){
+                        putSign(i - size, compSign);
+                    } else {
+                        getRandom(0, 1) ? putSign(i, compSign) : putSign(i + size, compSign);
+                    }
                     return true;
                 }
             }
@@ -160,13 +186,18 @@ function vertical(point) {
     return false;
 }
 
-function diagonal(point) {
-    var opposite;
+function diagonal(point, other) {
+    var opposite,
+        position;
+    if (other === undefined) {
+        other = point;
+    }
     if ((map[center] === point) && corners.some(function (item, i, arr) {
+            position = i;
             opposite = arr.length - i - 1;
-            return ((map[item] === point) && !map[arr[opposite]]);
+            return ((map[item] === other) && !map[arr[opposite]]);
         })) {
-        putSign(corners[opposite], compSign);
+        (other || getRandom(0, 1)) ? putSign(corners[opposite], compSign) : putSign(corners[position], compSign);
         return true;
     }
     return false;
@@ -178,9 +209,3 @@ function userZero() {
     compSign = cross;
     compStep(true);
 }
-
-
-//outerHTML
-//c. text
-//d. innerText
-//e. HTML
