@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="app.css"/>
 </head>
 <body>
-    <button onclick="userZero()">Ходити ноликами</button>
+    <div id="msg" class="msg">ваш хід</div>
     <div class="row">
         <div id="0" class="field" onclick="userStep(0)"></div>
         <div id="1" class="field" onclick="userStep(1)"></div>
@@ -22,7 +22,11 @@
         <div id="7" class="field" onclick="userStep(7)"></div>
         <div id="8" class="field" onclick="userStep(8)"></div>
     </div>
-    <div id="msg"></div>
-<script src="app.js"></script>
+    <ul class="menu">
+        <div>грати</div>
+        <li class="button" onclick="userCross()"><a><img class="icon" src="cross.png"></a></li>
+        <li class="button" onclick="userZero()"><a><img class="icon" src="zero.png"></a></li>
+    </ul>
+    <script src="app.js"></script>
 </body>
 </html>

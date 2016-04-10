@@ -1,7 +1,8 @@
 var cross = "<img src='cross.png'>",
     zero = "<img src='zero.png'>",
-    winMsg = "Комп'ютер переміг!",
-    drawMsg = "Нічия!",
+    winMsg = "переміг комп'ютер",
+    drawMsg = "нічия",
+    turnMsg = "ваш хід",
     userSign = cross,
     compSign = zero,
     size = 3,
@@ -18,25 +19,49 @@ var cross = "<img src='cross.png'>",
     emptyChain,
     notChain = [1, 2, 4, 5],
     memorized,
-    step = 0;
+    step = 0,
+    finish = false;
+
+function userCross() {
+    refresh();
+    userSign = cross;
+    compSign = zero;
+}
+
+function userZero() {
+    refresh();
+    userSign = zero;
+    compSign = cross;
+    compStep();
+}
 
 function userStep(field) {
     if (!step){
         refresh();
     }
-    putSign(field, userSign);
-    if (!ifFinish(drawMsg)) {
-        compStep(false);
+    if (!map[field] && !finish) {
+        putSign(field, userSign);
+        if(!ifFinish(drawMsg)) {
+            compStep();
+        }
+    //} else {
+    //    document.getElementById(field.toString()).onmouseover = changeCursor(field);
     }
 }
+
+//function changeCursor(field) {
+//    document.getElementById(field.toString()).style.cursor = "default";
+//}
 
 function refresh(){
     for (var i = 0; i < countFields; i++){
         map[i] = empty;
         document.getElementById(i.toString()).innerHTML = "";
+        document.getElementById(i.toString()).style.backgroundColor = "#fff";
     }
     step = 0;
-    document.getElementById("msg").innerHTML = "";
+    finish = false;
+    document.getElementById("msg").innerHTML = turnMsg;
 }
 
 function putSign(field, sign) {
@@ -47,12 +72,14 @@ function putSign(field, sign) {
 function ifFinish(result) {
     if ((++step >= countFields) || (result === winMsg)) {
         document.getElementById("msg").innerHTML = result;
-        return true;
+        finish = true;
+    } else {
+        finish = false;
     }
-    return false;
+    return finish;
 }
 
-function compStep(first){
+function compStep(){
     if (step < 3) {
         if (!map[center] && (!step && getRandom(0, 1) || step)) {
             putSign(center, compSign);
@@ -83,7 +110,7 @@ function compStep(first){
                 if (map[middles[middles.length - memorized - 1]] === userPoint) {
                     putSign(corners[getRandom(0, 3)], compSign);
                 } else {
-                    if (map[middles[memorized + 1] === userPoint]) {
+                    if (map[middles[memorized + 1]] === userPoint) {
                         memorized ? freeCorners.shift() : freeCorners.pop();
                     } else {
                         memorized ? freeCorners.splice(1, 1) : freeCorners.splice(2, 1);
@@ -111,7 +138,7 @@ function compStep(first){
             }
         }
     }
-    if ((step !== 4) && (horizontal(compChain) || vertical(compPoint, empty) || diagonal(compPoint))) {
+    if (horizontal(compChain) || vertical(compPoint, empty) || diagonal(compPoint)) {
         return ifFinish(winMsg);
     }
     if (horizontal(userChain) || vertical(userPoint, empty) || diagonal(userPoint)) {
@@ -142,18 +169,18 @@ function horizontal(chain) {
             } else {
                 putSign(position + item.indexOf(empty), compSign);
             }
-            //if (item.indexOf(compPoint) > -1) {
-            //    compWon(position);
-            //}
+            if (chain === compChain) {
+                compWon(position, position + 1, position + 2);
+            }
             return true;
     }});
 }
 
-//function compWon(position) {
-//    for (var i = 0; i < size; i++) {
-//        document.getElementById((position + i).toString()).style.backgroundColor = "#00cc00";
-//    }
-//}
+function compWon(pos1, pos2, pos3) {
+    document.getElementById(pos1.toString()).style.backgroundColor = "#5cd65c";
+    document.getElementById(pos2.toString()).style.backgroundColor = "#5cd65c";
+    document.getElementById(pos3.toString()).style.backgroundColor = "#5cd65c";
+}
 
 function vertical(point, other) {
     for (var i = 0; i < 2 * size; i++) {
@@ -161,6 +188,9 @@ function vertical(point, other) {
             if ((map[i + 2 * size] === point) && (map[i + size] === other)) {
                 if (point) {
                     putSign(i + size, compSign);
+                    if (point === compPoint) {
+                        compWon(i, i + 2 * size, i + size);
+                    }
                 } else {
                     getRandom(0, 1) ? putSign(i, compSign) : putSign(i + 2 * size, compSign);
                 }
@@ -170,6 +200,9 @@ function vertical(point, other) {
                 if ((i < size) && (map[i + 2 * size] === other)) {
                     if (point) {
                         putSign(i + 2 * size, compSign);
+                        if (point === compPoint) {
+                            compWon(i, (i + 2 * size), (i + size));
+                        }
                     } else {
                         getRandom(0, 1) ? putSign(i, compSign) : putSign(i + size, compSign);
                     }
@@ -177,6 +210,9 @@ function vertical(point, other) {
                 } else if ((i >= size) && (map[i - size] === other)) {
                     if (point){
                         putSign(i - size, compSign);
+                        if (point === compPoint) {
+                            compWon(i, i + size, i - size);
+                        }
                     } else {
                         getRandom(0, 1) ? putSign(i, compSign) : putSign(i + size, compSign);
                     }
@@ -189,8 +225,7 @@ function vertical(point, other) {
 }
 
 function diagonal(point, other) {
-    var opposite,
-        position;
+    var position, opposite;
     if (other === undefined) {
         other = point;
     }
@@ -200,14 +235,10 @@ function diagonal(point, other) {
             return ((map[item] === other) && !map[arr[opposite]]);
         })) {
         (other || getRandom(0, 1)) ? putSign(corners[opposite], compSign) : putSign(corners[position], compSign);
+        if (point === compPoint) {
+            compWon(corners[opposite], corners[position], center);
+        }
         return true;
     }
     return false;
-}
-
-function userZero() {
-    refresh();
-    userSign = zero;
-    compSign = cross;
-    compStep(true);
 }
