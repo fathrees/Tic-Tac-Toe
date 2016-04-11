@@ -44,14 +44,8 @@ function userStep(field) {
         if(!ifFinish(drawMsg)) {
             compStep();
         }
-    //} else {
-    //    document.getElementById(field.toString()).onmouseover = changeCursor(field);
     }
 }
-
-//function changeCursor(field) {
-//    document.getElementById(field.toString()).style.cursor = "default";
-//}
 
 function refresh(){
     for (var i = 0; i < countFields; i++){
