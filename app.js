@@ -229,7 +229,7 @@ function diagonal(point, other) {
             return ((map[item] === other) && !map[arr[opposite]]);
         })) {
         (other || getRandom(0, 1)) ? putSign(corners[opposite], compSign) : putSign(corners[position], compSign);
-        if (point === compPoint) {
+        if (point === compPoint && other === point) {
             compWon(corners[opposite], corners[position], center);
         }
         return true;
